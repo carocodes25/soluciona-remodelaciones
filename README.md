@@ -245,29 +245,77 @@ Ver `.env.example` para la lista completa. Variables principales:
 - `TWILIO_*`: (opcional) para SMS/WhatsApp
 - `MAPBOX_TOKEN`: (opcional) para mapas
 
-## 🚢 Despliegue
+## 🚢 Deployment / Despliegue
 
-### Producción con Docker
+### 🚀 Deployment Rápido (1 comando)
 
 ```bash
-docker-compose -f docker-compose.prod.yml up -d
+./deploy.sh
 ```
 
-### Cloud (AWS/GCP/Azure)
+Selecciona:
+- **Opción 1**: Development (con hot-reload)
+- **Opción 2**: Production (optimizado)
 
-1. Configurar RDS PostgreSQL y ElastiCache Redis
-2. Build de imágenes:
-   ```bash
-   docker build -t soluciona-backend ./backend
-   docker build -t soluciona-frontend ./frontend
-   ```
-3. Push a registry (ECR/GCR/ACR)
-4. Deploy con ECS/Cloud Run/App Service
-5. Configurar ALB/Cloud Load Balancer
-6. SSL con Let's Encrypt o ACM
-7. CDN con CloudFront/Cloud CDN
+### 📚 Guías de Deployment
 
-Ver `docs/deployment.md` para guía detallada.
+- **[QUICK_DEPLOY.md](QUICK_DEPLOY.md)** - ⚡ Guía rápida (30 min)
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - 📖 Guía completa con SSL, Nginx, backups
+
+### 🌐 Opciones de Hosting
+
+#### Opción 1: VPS Tradicional (DigitalOcean, AWS, Linode)
+```bash
+# En tu servidor
+git clone https://github.com/carocodes25/soluciona-remodelaciones.git
+cd soluciona-remodelaciones
+cp .env.production.example .env.production
+nano .env.production  # Configurar
+./deploy.sh  # Opción 2 (Production)
+```
+
+**Costo**: $6-12/mes | **Tiempo**: 30-60 min | **Dificultad**: Media
+
+#### Opción 2: Railway (PaaS - Más Fácil)
+1. Ve a https://railway.app
+2. Conecta GitHub
+3. Importa `soluciona-remodelaciones`
+4. Configura variables de entorno
+5. Deploy automático en 5 min
+
+**Costo**: $10-20/mes | **Tiempo**: 5-10 min | **Dificultad**: Fácil
+
+#### Opción 3: Docker Compose Local
+```bash
+docker-compose up -d
+```
+
+**Costo**: Gratis | **Tiempo**: 2 min | **Dificultad**: Muy fácil
+
+### 🔒 SSL/HTTPS Gratis
+
+Certificados gratis con Let's Encrypt incluidos en las guías.
+
+```bash
+# Obtener certificado SSL
+sudo certbot certonly --standalone -d tudominio.com
+```
+
+### 📊 Scripts Útiles
+
+```bash
+./deploy.sh              # Deployment automático
+./scripts/backup.sh      # Backup de base de datos
+./scripts/health-check.sh # Verificar estado de servicios
+```
+
+### 🌍 Dominios Recomendados
+
+- **Namecheap**: $8-12/año (.com)
+- **Cloudflare**: $8-10/año + CDN gratis
+- **Google Domains**: $12/año
+
+Ver [QUICK_DEPLOY.md](QUICK_DEPLOY.md) para más opciones.
 
 ## 📖 Documentación Adicional
 
