@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: soluciona-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: soluciona_db
+      POSTGRES_USER: soluciona
+      POSTGRES_PASSWORD: soluciona_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U soluciona -d soluciona_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: soluciona-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Backend API (NestJS)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: soluciona-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://soluciona:soluciona_pass@postgres:5432/soluciona_db
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-change-in-production
+      JWT_REFRESH_SECRET: dev-refresh-secret-change-in-production
+      APP_URL: http://localhost:3000
+      ADMIN_DEFAULT_EMAIL: admin@soluciona.co
+      ADMIN_DEFAULT_PASSWORD: Admin123!
+      STORAGE_PROVIDER: local
+      UPLOAD_PATH: /app/uploads
+      KYC_PROVIDER: stub
+      PAYMENTS_PROVIDER: stub
+      EMAIL_PROVIDER: stub
+      SMS_PROVIDER: stub
+      PUSH_PROVIDER: stub
+      MAPS_PROVIDER: leaflet
+      PLATFORM_FEE_PERCENTAGE: 10
+      LOG_LEVEL: debug
+      CORS_ORIGINS: http://localhost:3000
+    ports:
+      - "4000:4000"
+      - "4001:4001"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/uploads:/app/uploads
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 5 &&
+        echo 'Running Prisma migrations...' &&
+        npx prisma migrate deploy &&
+        echo 'Checking if database needs seeding...' &&
+        (npx prisma db seed || echo 'Seed failed or already done, continuing...') &&
+        echo 'Starting backend server...' &&
+        npm run start
+      "
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: soluciona-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      NEXT_PUBLIC_WS_URL: ws://localhost:4001
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_MAPS_PROVIDER: leaflet
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/app:/app/app
+      - ./frontend/components:/app/components
+      - ./frontend/lib:/app/lib
+      - ./frontend/public:/app/public
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    command: npm run dev
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: soluciona-network

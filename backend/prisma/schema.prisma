@@ -1,0 +1,846 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm]
+}
+
+// =====================================================
+// ENUMS
+// =====================================================
+
+enum UserRole {
+  CLIENT
+  PRO
+  ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum VerificationLevel {
+  NONE
+  BRONZE
+  SILVER
+  GOLD
+}
+
+enum DocumentType {
+  ID_FRONT
+  ID_BACK
+  SELFIE
+  RUT
+  POLICE_CERT
+  PROCURADURIA_CERT
+  CONTRALORIA_CERT
+  PORTFOLIO_PHOTO
+  JOB_PHOTO
+  JOB_VIDEO
+  EVIDENCE_PHOTO
+  REVIEW_PHOTO
+  OTHER
+}
+
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  WITHDRAWN
+}
+
+enum ContractStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  IN_DISPUTE
+}
+
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  AWAITING_APPROVAL
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  HELD_IN_ESCROW
+  RELEASED
+  REFUNDED
+  FAILED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PSE
+  NEQUI
+  DAVIPLATA
+  CASH
+}
+
+enum DisputeStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum NotificationType {
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+  IN_APP
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+// =====================================================
+// USER & AUTH
+// =====================================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      UserRole
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Profile info
+  firstName        String
+  lastName         String
+  name             String?  // Full name (firstName + lastName)
+  phone            String?
+  isPhoneVerified  Boolean  @default(false)
+  isEmailVerified  Boolean  @default(false)
+  avatar           String?
+  avatarUrl        String?
+  address          String?
+  dateOfBirth      DateTime?
+  identityNumber   String?  @unique
+
+  // Security
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret  String?
+  lastLoginAt      DateTime?
+  lastLoginIp      String?
+
+  // Relationships
+  pro              Pro?
+  jobsAsClient     Job[]
+  proposals        Proposal[]
+  reviewsGiven     Review[]            @relation("ReviewAuthor")
+  reviewsReceived  Review[]            @relation("ReviewSubject")
+  conversations    ConversationUser[]
+  messages         Message[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+  refreshTokens    RefreshToken[]
+  otpCodes         OtpCode[]
+  files            File[]
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([isRevoked])
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  code      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // 'VERIFICATION', 'PASSWORD_RESET', '2FA'
+  purpose   String   // 'email', 'phone', 'login'
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([code])
+  @@index([type])
+  @@index([isUsed])
+}
+
+// =====================================================
+// PROFESSIONAL (MAESTRO) PROFILE
+// =====================================================
+
+model Pro {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Business info
+  businessName     String?
+  bio              String?
+  yearsExperience  Int?
+  teamSize         Int       @default(1)
+  verificationLevel VerificationLevel @default(NONE)
+
+  // Service details
+  isAvailable      Boolean   @default(true)
+  responseTimeHours Int?
+  serviceRadiusKm  Int       @default(20)
+  
+  // Stats
+  totalJobs        Int       @default(0)
+  completedJobs    Int       @default(0)
+  averageRating    Float     @default(0)
+  totalReviews     Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  verifications  Verification[]
+  documents      Document[]
+  skills         ProSkill[]
+  serviceAreas   ProServiceArea[]
+  portfolioItems PortfolioItem[]
+  proposals      Proposal[]
+  contracts      Contract[]
+
+  @@index([userId])
+  @@index([verificationLevel])
+  @@index([isAvailable])
+  @@index([averageRating])
+}
+
+model Verification {
+  id     String             @id @default(uuid())
+  proId  String
+  pro    Pro                @relation(fields: [proId], references: [id], onDelete: Cascade)
+  
+  status VerificationStatus @default(PENDING)
+  level  VerificationLevel  @default(BRONZE)
+  
+  // KYC Data
+  fullName           String?
+  identityNumber     String?
+  identityType       String? // CC, CE, NIT
+  dateOfBirth        DateTime?
+  
+  // Documents submitted
+  hasIdFront         Boolean   @default(false)
+  hasIdBack          Boolean   @default(false)
+  hasSelfie          Boolean   @default(false)
+  hasRut             Boolean   @default(false)
+  hasPoliceCert      Boolean   @default(false)
+  hasProcuraduria    Boolean   @default(false)
+  hasContraloria     Boolean   @default(false)
+  
+  // Verification results
+  idVerified         Boolean   @default(false)
+  livenessVerified   Boolean   @default(false)
+  backgroundVerified Boolean   @default(false)
+  
+  // Review
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  reviewNotes   String?
+  rejectionReason String?
+  
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([proId])
+  @@index([status])
+  @@index([level])
+}
+
+model Document {
+  id        String       @id @default(uuid())
+  proId     String?
+  pro       Pro?         @relation(fields: [proId], references: [id], onDelete: Cascade)
+  jobId     String?
+  job       Job?         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  milestoneId String?
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  reviewId    String?
+  review      Review?    @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  
+  type      DocumentType
+  url       String
+  filename  String
+  mimeType  String
+  size      Int
+  metadata  Json?
+  
+  createdAt DateTime @default(now())
+
+  @@index([proId])
+  @@index([jobId])
+  @@index([milestoneId])
+  @@index([reviewId])
+  @@index([type])
+}
+
+model PortfolioItem {
+  id          String   @id @default(uuid())
+  proId       String
+  pro         Pro      @relation(fields: [proId], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?
+  category    String
+  
+  // Legacy fields
+  beforePhoto String?
+  afterPhoto  String?
+  
+  // New fields for multiple photos and video
+  photos      String[] @default([])
+  videoUrl    String?
+  
+  isPublished Boolean  @default(true)
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([proId])
+  @@index([category])
+  @@index([isPublished])
+}
+
+// =====================================================
+// CATALOG (Categories, Skills, Cities)
+// =====================================================
+
+model Category {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  name        String
+  description String?
+  icon        String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  
+  // Pricing guidance
+  priceMin    Int?
+  priceMax    Int?
+  priceUnit   String? // per sqm, per unit, per hour
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  skills      Skill[]
+  jobs        Job[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Skill {
+  id          String  @id @default(uuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  slug        String  @unique
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+  
+  pros        ProSkill[]
+  jobs        Job[]
+
+  @@index([categoryId])
+  @@index([slug])
+  @@index([isActive])
+}
+
+model ProSkill {
+  id      String @id @default(uuid())
+  proId   String
+  pro     Pro    @relation(fields: [proId], references: [id], onDelete: Cascade)
+  skillId String
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  
+  @@unique([proId, skillId])
+  @@index([proId])
+  @@index([skillId])
+}
+
+model City {
+  id           String @id @default(uuid())
+  name         String
+  department   String
+  country      String @default("Colombia")
+  latitude     Float
+  longitude    Float
+  
+  serviceAreas ProServiceArea[]
+  jobs         Job[]
+
+  @@unique([name, department])
+  @@index([name])
+  @@index([department])
+}
+
+model ProServiceArea {
+  id     String @id @default(uuid())
+  proId  String
+  pro    Pro    @relation(fields: [proId], references: [id], onDelete: Cascade)
+  cityId String
+  city   City   @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  
+  @@unique([proId, cityId])
+  @@index([proId])
+  @@index([cityId])
+}
+
+// =====================================================
+// JOBS & PROPOSALS
+// =====================================================
+
+model Job {
+  id          String    @id @default(uuid())
+  clientId    String
+  client      User      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  
+  title       String
+  description String    @db.Text
+  
+  // Location
+  cityId      String
+  city        City      @relation(fields: [cityId], references: [id])
+  address     String
+  latitude    Float?
+  longitude   Float?
+  
+  // Budget
+  budget      BigInt    @default(0)
+  budgetMin   BigInt?
+  budgetMax   BigInt?
+  
+  // Timeline
+  urgency     String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  startDate   DateTime?
+  
+  status      JobStatus @default(DRAFT)
+  
+  // Relations
+  skills      Skill[]
+  photos      File[]    @relation("JobPhotos")
+  videoId     String?
+  video       File?     @relation("JobVideo", fields: [videoId], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+  closedAt    DateTime?
+  deletedAt   DateTime?
+
+  proposals   Proposal[]
+  documents   Document[]
+
+  @@index([clientId])
+  @@index([categoryId])
+  @@index([cityId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+model Proposal {
+  id        String         @id @default(uuid())
+  jobId     String
+  job       Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  proId     String
+  pro       Pro            @relation(fields: [proId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Offer details
+  totalPrice      Int
+  estimatedDays   Int
+  description     String
+  scope           String?
+  
+  status          ProposalStatus @default(PENDING)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  expiresAt       DateTime?
+  respondedAt     DateTime?
+  deletedAt       DateTime?
+  
+  contract        Contract?
+
+  @@index([jobId])
+  @@index([proId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
+}
+
+// =====================================================
+// CONTRACTS & MILESTONES
+// =====================================================
+
+model Contract {
+  id          String         @id @default(uuid())
+  proposalId  String         @unique
+  proposal    Proposal       @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  proId       String
+  pro         Pro            @relation(fields: [proId], references: [id], onDelete: Cascade)
+  
+  totalAmount Int
+  
+  status      ContractStatus @default(ACTIVE)
+  
+  startedAt   DateTime?
+  completedAt DateTime?
+  cancelledAt DateTime?
+  
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  milestones  Milestone[]
+  dispute     Dispute?
+
+  @@index([proposalId])
+  @@index([proId])
+  @@index([status])
+}
+
+model Milestone {
+  id          String          @id @default(uuid())
+  contractId  String
+  contract    Contract        @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  
+  order       Int
+  title       String
+  description String?
+  amount      Int
+  
+  dueDate     DateTime?
+  status      MilestoneStatus @default(PENDING)
+  
+  evidenceNotes String?
+  
+  submittedAt   DateTime?
+  approvedAt    DateTime?
+  rejectedAt    DateTime?
+  rejectionReason String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  documents     Document[]
+  payment       Payment?
+
+  @@index([contractId])
+  @@index([status])
+  @@index([order])
+}
+
+// =====================================================
+// PAYMENTS
+// =====================================================
+
+model Payment {
+  id            String        @id @default(uuid())
+  milestoneId   String        @unique
+  milestone     Milestone     @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  
+  amount        Int
+  platformFee   Int
+  proAmount     Int
+  
+  status        PaymentStatus @default(PENDING)
+  method        PaymentMethod?
+  
+  // External provider data
+  provider          String? // wompi, payu, stub
+  externalId        String?
+  externalReference String?
+  
+  // Escrow
+  heldAt        DateTime?
+  releasedAt    DateTime?
+  refundedAt    DateTime?
+  
+  metadata      Json?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  payout        Payout?
+
+  @@index([milestoneId])
+  @@index([status])
+  @@index([externalId])
+}
+
+model Payout {
+  id        String   @id @default(uuid())
+  paymentId String   @unique
+  payment   Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  
+  amount    Int
+  status    String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  
+  // Bank details (encrypted in production)
+  bankName      String?
+  accountType   String?
+  accountNumber String?
+  
+  processedAt DateTime?
+  completedAt DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([paymentId])
+  @@index([status])
+}
+
+// =====================================================
+// REVIEWS & RATINGS
+// =====================================================
+
+model Review {
+  id          String   @id @default(uuid())
+  authorId    String
+  author      User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  subjectId   String
+  subject     User     @relation("ReviewSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  
+  rating      Int // 1-5
+  comment     String?
+  
+  // Can only review after payment
+  milestoneId String?
+  
+  // Moderation
+  isReported  Boolean  @default(false)
+  reportReason String?
+  isModerated Boolean  @default(false)
+  moderatedBy String?
+  moderatedAt DateTime?
+  isVisible   Boolean  @default(true)
+  
+  // Anti-fraud
+  authorIp    String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  documents   Document[]
+
+  @@index([authorId])
+  @@index([subjectId])
+  @@index([rating])
+  @@index([isVisible])
+  @@index([createdAt])
+}
+
+// =====================================================
+// MESSAGING
+// =====================================================
+
+model Conversation {
+  id        String             @id @default(uuid())
+  
+  // Can be tied to a job
+  jobId     String?
+  
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  users     ConversationUser[]
+  messages  Message[]
+
+  @@index([jobId])
+}
+
+model ConversationUser {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  lastReadAt     DateTime?
+  
+  @@unique([conversationId, userId])
+  @@index([conversationId])
+  @@index([userId])
+}
+
+model Message {
+  id             String        @id @default(uuid())
+  conversationId String
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  
+  content        String
+  attachments    Json?
+  
+  status         MessageStatus @default(SENT)
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+// =====================================================
+// DISPUTES
+// =====================================================
+
+model Dispute {
+  id         String        @id @default(uuid())
+  contractId String        @unique
+  contract   Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  
+  raisedBy   String // userId
+  reason     String
+  description String
+  
+  status     DisputeStatus @default(OPEN)
+  
+  assignedTo String?
+  resolution String?
+  resolvedAt DateTime?
+  
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@index([contractId])
+  @@index([status])
+}
+
+// =====================================================
+// NOTIFICATIONS
+// =====================================================
+
+model Notification {
+  id      String           @id @default(uuid())
+  userId  String
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type    NotificationType
+  title   String
+  message String
+  data    Json?
+  
+  isRead  Boolean          @default(false)
+  sentAt  DateTime?
+  readAt  DateTime?
+  
+  createdAt DateTime       @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// =====================================================
+// AUDIT & LOGS
+// =====================================================
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  action    String
+  entity    String
+  entityId  String?
+  
+  changes   Json?
+  metadata  Json?
+  
+  ipAddress String?
+  userAgent String?
+  
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+// =====================================================
+// FILES
+// =====================================================
+
+model File {
+  id           String   @id @default(uuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  path         String
+  url          String
+  
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  jobPhotos    Job[]    @relation("JobPhotos")
+  jobVideo     Job[]    @relation("JobVideo")
+
+  @@index([uploadedById])
+  @@index([createdAt])
+}
+

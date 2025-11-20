@@ -1,0 +1,84 @@
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
+import helmet from 'helmet';
+import * as compression from 'compression';
+import { AppModule } from './app.module';
+import { PrismaService } from './prisma/prisma.service';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
+
+  const configService = app.get(ConfigService);
+
+  // Security
+  app.use(helmet());
+  app.use(compression());
+
+  // CORS
+  const corsOrigins = configService.get('CORS_ORIGINS', 'http://localhost:3000');
+  app.enableCors({
+    origin: corsOrigins.split(','),
+    credentials: true,
+  });
+
+  // Global prefix
+  app.setGlobalPrefix('api');
+
+  // Validation
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      forbidNonWhitelisted: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
+
+  // Prisma shutdown hook
+  const prismaService = app.get(PrismaService);
+  await prismaService.enableShutdownHooks(app);
+
+  // Swagger documentation
+  const config = new DocumentBuilder()
+    .setTitle('Soluciona Remodelaciones API')
+    .setDescription(
+      'Marketplace API para conectar clientes con maestros de remodelación en Colombia',
+    )
+    .setVersion('1.0')
+    .addBearerAuth()
+    .addTag('auth', 'Autenticación y registro')
+    .addTag('users', 'Gestión de usuarios')
+    .addTag('pros', 'Perfiles de maestros')
+    .addTag('categories', 'Categorías y skills')
+    .addTag('jobs', 'Solicitudes de trabajo')
+    .addTag('proposals', 'Cotizaciones')
+    .addTag('contracts', 'Contratos y hitos')
+    .addTag('payments', 'Pagos y transacciones')
+    .addTag('reviews', 'Reseñas y calificaciones')
+    .addTag('search', 'Búsqueda de maestros')
+    .addTag('messaging', 'Chat y mensajería')
+    .addTag('admin', 'Panel de administración')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
+
+  // Start server
+  const port = configService.get('PORT', 4000);
+  await app.listen(port);
+
+  console.log(`
+    🚀 Soluciona Remodelaciones API
+    📝 Server running on: http://localhost:${port}
+    📚 API Documentation: http://localhost:${port}/api/docs
+    🔍 Environment: ${configService.get('NODE_ENV', 'development')}
+  `);
+}
+
+bootstrap();

@@ -1,0 +1,27 @@
+# Test Results Directory
+
+This directory contains test reports and error monitoring logs.
+
+## Files Generated
+
+- `error-report-*.json` - Error monitoring reports from test runs
+- `results.json` - Playwright test results in JSON format
+- Other test artifacts and reports
+
+## Reports
+
+All test runs will generate detailed reports including:
+- Console logs captured during tests
+- Error messages and stack traces
+- Alerts and dialogs shown
+- Network failures
+- Timestamps and URLs for each event
+
+## Viewing Reports
+
+After running tests, view the HTML report with:
+```bash
+npm run test:report
+```
+
+Or open `../playwright-report/index.html` in your browser.
