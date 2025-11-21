@@ -21,24 +21,14 @@ async function bootstrap() {
   }));
   app.use(compression());
 
-  // CORS - Allow multiple origins
-  const corsOrigins = configService.get('CORS_ORIGINS', 'http://localhost:3000');
-  const allowedOrigins = corsOrigins.split(',').map(origin => origin.trim());
-  
+  // CORS - Simple and permissive for production
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, Postman, etc.)
-      if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: true, // Allow all origins for now
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    maxAge: 600, // Cache preflight for 10 minutes
   });
 
   // Global prefix
