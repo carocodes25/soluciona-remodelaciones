@@ -55,4 +55,4 @@ COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 4000 4001
 
-CMD ["sh", "-c", "echo '🔄 Running migrations...' && npx prisma migrate deploy && echo '🚀 Starting app...' && echo 'Listing dist:' && ls -la dist/ && exec node dist/main"]
+CMD ["sh", "-c", "echo 'Running migrations...' && npx prisma migrate deploy && echo 'Migrations complete' && echo 'Checking dist directory:' && ls -la dist/ && echo 'Starting Node.js application...' && node dist/main"]
