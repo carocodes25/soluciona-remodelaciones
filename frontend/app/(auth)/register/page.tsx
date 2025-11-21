@@ -56,9 +56,9 @@ export default function RegisterPage() {
       
       // Redirect based on role
       if (formData.role === 'CLIENT') {
-        router.push('/client/dashboard');
+        router.push('/client-dashboard');
       } else {
-        router.push('/pro/onboarding');
+        router.push('/pro-dashboard');
       }
     } catch (err) {
       console.error('Registration failed:', err);
