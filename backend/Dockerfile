@@ -53,6 +53,10 @@ RUN npm install --omit=dev
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 
+# Copy start script
+COPY start.sh ./
+RUN chmod +x start.sh
+
 EXPOSE 4000 4001
 
-CMD ["node", "dist/main"]
+CMD ["./start.sh"]
