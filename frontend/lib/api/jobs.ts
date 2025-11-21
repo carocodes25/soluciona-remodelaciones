@@ -21,11 +21,14 @@ export interface Job {
   client: {
     id: string;
     name?: string;
+    firstName?: string;
+    lastName?: string;
     avatar?: string;
   };
   photos?: any[];
   skills?: any[];
   createdAt: string;
+  proposalsCount?: number;
   _count?: {
     proposals: number;
   };

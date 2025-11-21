@@ -198,7 +198,9 @@ export default function SubmitProposalPage() {
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="text-gray-600">Cliente:</span>
                     <span className="font-semibold text-gray-900">
-                      {job.client.name || 'Cliente'}
+                      {job.client.firstName && job.client.lastName 
+                        ? `${job.client.firstName} ${job.client.lastName}`
+                        : job.client.name || 'Cliente'}
                     </span>
                   </div>
 
@@ -209,7 +211,7 @@ export default function SubmitProposalPage() {
 
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Propuestas:</span>
-                    <span className="font-semibold text-gray-900">{job._count?.proposals || 0}</span>
+                    <span className="font-semibold text-gray-900">{job.proposalsCount || job._count?.proposals || 0}</span>
                   </div>
                 </div>
 
