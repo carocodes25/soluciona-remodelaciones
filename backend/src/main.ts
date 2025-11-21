@@ -71,12 +71,12 @@ async function bootstrap() {
 
   // Start server
   const port = configService.get('PORT', 4000);
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   console.log(`
     🚀 Soluciona Remodelaciones API
-    📝 Server running on: http://localhost:${port}
-    📚 API Documentation: http://localhost:${port}/api/docs
+    📝 Server running on: http://0.0.0.0:${port}
+    📚 API Documentation: http://0.0.0.0:${port}/api/docs
     🔍 Environment: ${configService.get('NODE_ENV', 'development')}
   `);
 }
