@@ -11,8 +11,7 @@ interface Job {
   title: string;
   description: string;
   status: string;
-  budgetMin: number;
-  budgetMax: number;
+  budget: number;
   urgency: string;
   city: {
     id: string;
@@ -113,8 +112,7 @@ export default function ProDashboardPage() {
           title: 'Reparación de instalación eléctrica residencial',
           description: 'Necesito un electricista certificado para revisar y reparar problemas con el sistema eléctrico de mi casa...',
           status: 'PUBLISHED',
-          budgetMin: 500000,
-          budgetMax: 1200000,
+          budget: 850000,
           urgency: 'URGENT',
           city: { id: '1', name: 'Bogotá' },
           category: { id: '1', name: 'Electricidad', icon: '⚡' },
@@ -131,8 +129,7 @@ export default function ProDashboardPage() {
           title: 'Remodelación completa de baño',
           description: 'Busco un profesional con experiencia en remodelación de baños...',
           status: 'PUBLISHED',
-          budgetMin: 3000000,
-          budgetMax: 5000000,
+          budget: 4000000,
           urgency: 'NORMAL',
           city: { id: '2', name: 'Medellín' },
           category: { id: '2', name: 'Plomería', icon: '🔧' },
@@ -488,7 +485,7 @@ export default function ProDashboardPage() {
                       
                       <div className="text-right ml-6">
                         <div className="text-2xl font-bold text-green-600 mb-1">
-                          {formatCurrency(job.budgetMin)} - {formatCurrency(job.budgetMax)}
+                          {formatCurrency(job.budget)}
                         </div>
                         {getUrgencyBadge(job.urgency)}
                       </div>

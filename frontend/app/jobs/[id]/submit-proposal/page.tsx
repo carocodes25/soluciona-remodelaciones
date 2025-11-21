@@ -191,7 +191,7 @@ export default function SubmitProposalPage() {
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="text-gray-600">Presupuesto:</span>
                     <span className="font-semibold text-gray-900">
-                      {formatCurrency(job.budgetMin)} - {formatCurrency(job.budgetMax)}
+                      {job.budget ? formatCurrency(job.budget) : 'A convenir'}
                     </span>
                   </div>
                   
@@ -258,9 +258,11 @@ export default function SubmitProposalPage() {
                   />
                 </div>
                 {errors.amount && <p className="text-sm text-red-600 mt-1">{errors.amount}</p>}
-                <p className="text-xs text-gray-500 mt-1">
-                  💡 Rango permitido: {formatCurrency(job.budgetMin)} - {formatCurrency(job.budgetMax)}
-                </p>
+                {job.budget && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    💡 Presupuesto del cliente: {formatCurrency(job.budget)}
+                  </p>
+                )}
               </div>
 
               {/* Estimated Days */}
