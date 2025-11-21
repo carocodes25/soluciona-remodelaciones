@@ -4,8 +4,7 @@ set -e
 echo "🔄 Running Prisma migrations..."
 npx prisma migrate deploy
 
-echo "🌱 Seeding database..."
-npx prisma db seed || echo "⚠️  Seed failed or already completed, continuing..."
+echo "🌱 Skipping seed in production..."
 
 echo "🚀 Starting application..."
-node dist/main
+exec node dist/main
