@@ -68,10 +68,8 @@ export default function SubmitProposalPage() {
       newErrors.amount = 'El monto es requerido';
     } else if (parseFloat(formData.amount) <= 0) {
       newErrors.amount = 'El monto debe ser mayor a 0';
-    } else if (job && parseFloat(formData.amount) < job.budgetMin) {
-      newErrors.amount = `El monto debe ser al menos ${formatCurrency(job.budgetMin)}`;
-    } else if (job && parseFloat(formData.amount) > job.budgetMax) {
-      newErrors.amount = `El monto no puede exceder ${formatCurrency(job.budgetMax)}`;
+    } else if (job && job.budget && parseFloat(formData.amount) > job.budget) {
+      newErrors.amount = `El monto no puede exceder ${formatCurrency(job.budget)}`;
     }
 
     if (!formData.estimatedDays) {

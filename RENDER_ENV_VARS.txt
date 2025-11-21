@@ -1,0 +1,30 @@
+# ===== COPIA ESTAS VARIABLES EN RENDER =====
+# Haz clic en "Add Environment Variable" por cada una
+
+DATABASE_URL
+postgresql://soluciona:v3lrrBkMBJC06uN3tnvKihE11q15QrFW@dpg-d4fra1efu37c739hdpmg-a.oregon-postgres.render.com/soluciona_db
+
+JWT_SECRET
+soluciona-jwt-secret-production-2024
+
+JWT_REFRESH_SECRET
+soluciona-refresh-secret-production-2024
+
+NODE_ENV
+production
+
+PORT
+10000
+
+CORS_ORIGINS
+http://localhost:3000
+
+# ===== OPCIONAL (déjalas vacías si no tienes Redis) =====
+REDIS_HOST
+(dejar vacío)
+
+REDIS_PORT
+6379
+
+REDIS_PASSWORD
+(dejar vacío)

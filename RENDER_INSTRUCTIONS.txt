@@ -1,0 +1,47 @@
+🚀 INSTRUCCIONES RENDER - BACKEND
+
+=== PASO 1: BASE DE DATOS (YA HECHO ✅) ===
+ID: dpg-d4fra1efu37c739hdpmg-a
+
+=== PASO 2: COPIAR DATABASE_URL ===
+En la página de la base de datos, busca:
+"Internal Database URL" o "Connection String"
+Debería verse así:
+postgresql://usuario:password@dpg-d4fra1efu37c739hdpmg-a.oregon-postgres.render.com/nombre_db
+
+=== PASO 3: CREAR WEB SERVICE ===
+1. Clic en "New +" → "Web Service"
+2. Conectar repositorio: carocodes25/soluciona-remodelaciones
+3. Configurar:
+   Name: soluciona-backend
+   Region: Oregon (US West)
+   Branch: main
+   Root Directory: backend
+   Runtime: Node
+   Build Command: npm install && npx prisma generate && npm run build
+   Start Command: npx prisma migrate deploy && npm run start:prod
+
+=== PASO 4: VARIABLES DE ENTORNO ===
+Agregar estas variables (clic en "Add Environment Variable"):
+
+DATABASE_URL = (pegar la URL que copiaste en paso 2)
+JWT_SECRET = soluciona-jwt-secret-production-2024
+JWT_REFRESH_SECRET = soluciona-refresh-secret-production-2024
+NODE_ENV = production
+PORT = 10000
+CORS_ORIGINS = http://localhost:3000
+
+DEJAR VACÍAS (opcional):
+REDIS_HOST = 
+REDIS_PORT = 6379
+REDIS_PASSWORD = 
+
+=== PASO 5: DEPLOY ===
+Clic en "Create Web Service"
+Esperar 3-5 minutos
+
+=== RESULTADO ===
+Te dará una URL como:
+https://soluciona-backend-xxxx.onrender.com
+
+¡ESA URL LA USARÁS PARA EL FRONTEND EN VERCEL!
