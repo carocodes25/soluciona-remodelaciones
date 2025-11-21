@@ -198,7 +198,7 @@ export default function SubmitProposalPage() {
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="text-gray-600">Cliente:</span>
                     <span className="font-semibold text-gray-900">
-                      {job.client.firstName} {job.client.lastName}
+                      {job.client.name || 'Cliente'}
                     </span>
                   </div>
 
