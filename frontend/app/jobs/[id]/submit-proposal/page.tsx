@@ -209,7 +209,7 @@ export default function SubmitProposalPage() {
 
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Propuestas:</span>
-                    <span className="font-semibold text-gray-900">{job.proposalsCount || 0}</span>
+                    <span className="font-semibold text-gray-900">{job._count?.proposals || 0}</span>
                   </div>
                 </div>
 
