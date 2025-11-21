@@ -243,9 +243,19 @@ async function main() {
   const clients = [];
 
   for (let i = 0; i < clientNames.length; i++) {
+    // Normalize email to remove accents/tildes
+    const normalizedFirstName = clientNames[i].firstName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    const normalizedLastName = clientNames[i].lastName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    
     const client = await prisma.user.create({
       data: {
-        email: `${clientNames[i].firstName.toLowerCase()}.${clientNames[i].lastName.toLowerCase()}@gmail.com`,
+        email: `${normalizedFirstName}.${normalizedLastName}@gmail.com`,
         password: defaultPassword,
         firstName: clientNames[i].firstName,
         lastName: clientNames[i].lastName,
@@ -300,9 +310,19 @@ async function main() {
     const proData = proNames[i];
     const category = allCategories.find(c => c.slug === proData.specialty);
     
+    // Normalize email to remove accents/tildes
+    const normalizedFirstName = proData.firstName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    const normalizedLastName = proData.lastName
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    
     const user = await prisma.user.create({
       data: {
-        email: `${proData.firstName.toLowerCase()}.${proData.lastName.toLowerCase()}@gmail.com`,
+        email: `${normalizedFirstName}.${normalizedLastName}@gmail.com`,
         password: defaultPassword,
         firstName: proData.firstName,
         lastName: proData.lastName,
@@ -392,7 +412,7 @@ async function main() {
   console.log('  Password: Admin123!');
   console.log('');
   console.log('Client:');
-  console.log('  Email: maria.gonzález@gmail.com');
+  console.log('  Email: maria.gonzalez@gmail.com');
   console.log('  Password: Demo123!');
   console.log('');
   console.log('Pro (Gold):');
