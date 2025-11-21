@@ -85,7 +85,7 @@
     "typescript": "^5.3.3"
   },
   "prisma": {
-    "seed": "echo 'Seed disabled - run manually with: npm run prisma:seed'"
+    "seed": "ts-node prisma/seed.ts"
   },
   "jest": {
     "moduleFileExtensions": [

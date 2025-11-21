@@ -240,6 +240,24 @@ export class CategoriesService {
   }
 
   /**
+   * Get all cities
+   */
+  async findAllCities() {
+    const cities = await this.prisma.city.findMany({
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        department: true,
+        latitude: true,
+        longitude: true,
+      },
+    });
+
+    return cities;
+  }
+
+  /**
    * Generate URL-friendly slug from name
    */
   private generateSlug(name: string): string {

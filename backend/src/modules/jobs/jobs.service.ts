@@ -112,7 +112,7 @@ export class JobsService {
       } as any,
     });
 
-    return job;
+    return this.serializeJob(job);
   }
 
   async findAll(searchDto: SearchJobsDto) {
@@ -186,7 +186,7 @@ export class JobsService {
     ]);
 
     return {
-      data: jobs,
+      data: jobs.map(job => this.serializeJob(job)),
       meta: {
         total,
         page,
@@ -247,7 +247,7 @@ export class JobsService {
       throw new NotFoundException('Job not found');
     }
 
-    return job;
+    return this.serializeJob(job);
   }
 
   async findMyJobs(userId: string, status?: JobStatus) {
@@ -276,7 +276,7 @@ export class JobsService {
       },
     });
 
-    return jobs;
+    return jobs.map(job => this.serializeJob(job));
   }
 
   async update(userId: string, id: string, updateJobDto: UpdateJobDto) {
@@ -354,7 +354,7 @@ export class JobsService {
       } as any,
     });
 
-    return updatedJob;
+    return this.serializeJob(updatedJob);
   }
 
   async remove(userId: string, id: string) {
@@ -399,5 +399,17 @@ export class JobsService {
     });
 
     return { message: 'Job deleted successfully' };
+  }
+
+  /**
+   * Serialize BigInt values to numbers for JSON compatibility
+   */
+  private serializeJob(job: any) {
+    return {
+      ...job,
+      budget: job.budget ? Number(job.budget) : 0,
+      budgetMin: job.budgetMin ? Number(job.budgetMin) : null,
+      budgetMax: job.budgetMax ? Number(job.budgetMax) : null,
+    };
   }
 }

@@ -31,6 +31,13 @@ export class CategoriesController {
     return this.categoriesService.findAll(includeInactive === 'true');
   }
 
+  @Get('meta/cities')
+  @ApiOperation({ summary: 'Get all cities' })
+  @ApiResponse({ status: 200, description: 'Cities list retrieved' })
+  getCities() {
+    return this.categoriesService.findAllCities();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get category by ID' })
   @ApiResponse({ status: 200, description: 'Category found' })

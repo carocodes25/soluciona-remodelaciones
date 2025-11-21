@@ -74,6 +74,21 @@ export default function JobDetailsPage() {
     }).format(amount);
   };
 
+  const handleCancelJob = async () => {
+    if (!confirm('¿Estás seguro de que deseas cancelar este proyecto? Esta acción no se puede deshacer.')) {
+      return;
+    }
+
+    try {
+      await jobsApi.delete(jobId);
+      alert('Proyecto cancelado exitosamente');
+      router.push('/client-dashboard');
+    } catch (error) {
+      console.error('Error canceling job:', error);
+      alert('Error al cancelar el proyecto. Por favor intenta de nuevo.');
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('es-CO', {
       year: 'numeric',
@@ -354,7 +369,10 @@ export default function JobDetailsPage() {
                   <button className="w-full border-2 border-gray-300 text-gray-700 px-4 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
                     ✏️ Editar Proyecto
                   </button>
-                  <button className="w-full border-2 border-red-300 text-red-700 px-4 py-3 rounded-lg font-semibold hover:bg-red-50 transition-colors">
+                  <button 
+                    onClick={handleCancelJob}
+                    className="w-full border-2 border-red-300 text-red-700 px-4 py-3 rounded-lg font-semibold hover:bg-red-50 transition-colors"
+                  >
                     ❌ Cancelar Proyecto
                   </button>
                 </>

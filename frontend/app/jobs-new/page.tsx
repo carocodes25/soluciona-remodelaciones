@@ -11,6 +11,7 @@ export default function NewJobPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [cities, setCities] = useState<Array<{ id: string; name: string; department: string }>>([]);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -27,22 +28,9 @@ export default function NewJobPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Ciudades colombianas principales (UUIDs reales de la BD)
-  const cities = [
-    { id: '86c2c906-d938-46cd-b364-2e1c0e3c164f', name: 'Bogotá', department: 'Cundinamarca' },
-    { id: 'c49b1e6a-5003-4f6b-89d3-48e79a37e368', name: 'Medellín', department: 'Antioquia' },
-    { id: '3e11a6b9-7b3c-4a15-846a-08d338a06ce0', name: 'Cali', department: 'Valle del Cauca' },
-    { id: '44bab76d-66b4-458f-a346-3a3f529edd18', name: 'Barranquilla', department: 'Atlántico' },
-    { id: 'fbd6d428-698e-49f9-a1ab-6d3fc5499082', name: 'Cartagena', department: 'Bolívar' },
-    { id: 'c75a8a62-a28b-4a6f-8f0b-04bd041538b5', name: 'Cúcuta', department: 'Norte de Santander' },
-    { id: '1e4e40aa-edfa-4281-ab97-cccc037287c0', name: 'Bucaramanga', department: 'Santander' },
-    { id: '73624efa-2a8f-491d-82b7-3ba2edd01557', name: 'Pereira', department: 'Risaralda' },
-    { id: '8af00f14-97b7-4ca6-9401-64ec250e75be', name: 'Santa Marta', department: 'Magdalena' },
-    { id: 'c3dcf094-1251-42a8-9d42-9af2ca1ea718', name: 'Manizales', department: 'Caldas' },
-  ];
-
   useEffect(() => {
     fetchCategories();
+    fetchCities();
   }, []);
 
   const fetchCategories = async () => {
@@ -54,6 +42,19 @@ export default function NewJobPage() {
       setCategories(data);
     } catch (error) {
       console.error('❌ Error fetching categories:', error);
+    }
+  };
+
+  const fetchCities = async () => {
+    try {
+      console.log('🔄 Cargando ciudades...');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories/meta/cities`);
+      if (!response.ok) throw new Error('Error al cargar ciudades');
+      const data = await response.json();
+      console.log('✅ Ciudades cargadas:', data.length, 'ciudades');
+      setCities(data);
+    } catch (error) {
+      console.error('❌ Error fetching cities:', error);
     }
   };
 

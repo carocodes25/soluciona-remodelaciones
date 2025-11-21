@@ -81,12 +81,12 @@ services:
       sh -c "
         echo 'Waiting for database...' &&
         sleep 5 &&
-        echo 'Running Prisma migrations...' &&
-        npx prisma migrate deploy &&
-        echo 'Checking if database needs seeding...' &&
+        echo 'Pushing Prisma schema...' &&
+        npx prisma db push &&
+        echo 'Seeding database...' &&
         (npx prisma db seed || echo 'Seed failed or already done, continuing...') &&
         echo 'Starting backend server...' &&
-        npm run start
+        npm run start:dev
       "
 
   # Frontend (Next.js)
